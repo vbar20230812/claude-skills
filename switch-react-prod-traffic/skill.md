@@ -1,6 +1,6 @@
 ---
 name: switch-react-prod-traffic
-description: "Switch production traffic between BLUE and GREEN React app deployment slots"
+description: "Switch production traffic between BLUE and GREEN React app deployment slots. Triggers on: switch traffic, switch prod, blue green switch, flip production, /switch-react-prod-traffic."
 ---
 
 # Switch React App Production Traffic
@@ -60,3 +60,10 @@ Firebase Project: assetflow-backend-2024
 - **This affects real users immediately**
 - Only run after verifying the target slot is working correctly
 - Keep the inactive slot as a rollback option
+
+## Rollback
+
+If the switch causes issues:
+1. Switch back to the previous slot using the same steps above
+2. The inactive slot still has the previous build — no redeployment needed
+3. Verify the rollback URL resolves correctly

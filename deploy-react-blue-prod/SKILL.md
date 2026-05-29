@@ -1,6 +1,6 @@
 ---
 name: deploy-react-blue-prod
-description: "Deploy AssetFlow React user app to BLUE production environment"
+description: "Deploy AssetFlow React user app to BLUE production slot (assetsflow-blue-work.web.app). Runs commit check, version bump, tests, Vite build, and Firebase deploy with browser verification. Triggers on: deploy blue, deploy to blue production, ship to blue, blue deploy, /deploy-react-blue-prod."
 ---
 
 # Deploy React User App to BLUE Production

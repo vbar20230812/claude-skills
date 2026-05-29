@@ -1,6 +1,6 @@
 ---
 name: context-mode-kill-switch
-description: Immediately disable or re-enable context-mode's tool interception and routing. Use when context-mode breaks your workflow, intercepts tools incorrectly, or causes unexpected behavior. Triggers on "kill context-mode", "disable context-mode", "stop context-mode", "context-mode off", "context-mode kill switch", "enable context-mode", "context-mode on".
+description: Toggle context-mode's tool interception on or off. Creates/removes a marker file that the pretooluse hook checks before intercepting Bash, Read, Grep, and WebFetch. Falls back to `claude plugin disable` if the hook patch is missing. Triggers on "kill context-mode", "disable context-mode", "stop context-mode", "context-mode off", "enable context-mode", "context-mode on", "context-mode status".
 ---
 
 # Context Mode Kill Switch

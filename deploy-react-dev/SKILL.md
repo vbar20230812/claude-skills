@@ -1,6 +1,6 @@
 ---
 name: deploy-react-dev
-description: "Deploy AssetFlow React user app to development environment"
+description: "Deploy AssetFlow React user app to development environment (assetflow-react-dev.web.app). Runs commit check, version bump, tests, Vite build, and Firebase deploy with browser verification. Triggers on: deploy dev, deploy to dev, ship to dev, dev deploy, /deploy-react-dev."
 ---
 
 # Deploy React User App to Development

@@ -1,6 +1,6 @@
 ---
 name: deploy-react-green-prod
-description: "Deploy AssetFlow React user app to GREEN production environment"
+description: "Deploy AssetFlow React user app to GREEN production slot (assetsflow-green-work.web.app). Runs commit check, version bump, tests, Vite build, and Firebase deploy with browser verification. Triggers on: deploy green, deploy to green production, ship to green, green deploy, /deploy-react-green-prod."
 ---
 
 # Deploy React User App to GREEN Production

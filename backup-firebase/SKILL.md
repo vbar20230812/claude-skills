@@ -1,89 +1,115 @@
 ---
 name: backup-firebase
-description: Backup Firebase Firestore production data to local file and Firebase Storage
+description: >
+  Backup Firebase Firestore data for dev or prod environments using gcloud native export.
+  Triggers on: "backup firebase", "backup firestore", "backup production data",
+  "create backup", "firestore export", "database backup".
 ---
 
-# Backup Firebase Production Data
+# Backup Firebase Firestore Data
 
-Create a complete backup of Firebase Firestore production data.
+Export all Firestore data to Google Cloud Storage using `gcloud firestore export`.
 
-**Announce at start:** "Creating Firebase production backup."
+## Environments
 
-## What This Does
+| Environment | Source Project | Destination Bucket | Backup Project |
+|-------------|---------------|-------------------|----------------|
+| prod | `assetflow-backend-2024` | `assetflow-prod-backups-me-west1` | `assetflow-prod-backups` (IAM-isolated) |
+| dev | `assetflow-dev-f6fa5` | `assetflow-dev-firestore-backups` | same as source |
 
-1. Exports all Firestore collections from production (`assetflow-backend-2024`)
-2. Filters out collections starting with "OBSOLETE"
-3. Saves backup locally to `backups/` folder with timestamp
-4. Uploads backup to Firebase Storage
+## Prerequisites
+
+1. **gcloud CLI** installed and authenticated:
+   ```bash
+   gcloud auth login
+   gcloud auth application-default login
+   ```
+2. **Correct project access** — your Google account must have:
+   - `Cloud Datastore Import/Export Admin` on the source project
+   - `Storage Object Creator` on the backup bucket
+3. **Windows TLS note**: If gcloud commands fail with certificate errors, set:
+   ```bash
+   export NODE_OPTIONS="--use-system-ca"
+   ```
 
 ## Steps
 
-1. **Navigate to the directory with the backup script:**
+1. **Announce at start:** "Creating Firestore backup for [dev|prod]."
+
+2. **Run the backup script from project root:**
    ```bash
-   cd /c/Users/victo/Projects/assetflow3
+   bash scripts/backup-firestore-manual.sh prod
+   ```
+   Or for dev:
+   ```bash
+   bash scripts/backup-firestore-manual.sh dev
    ```
 
-2. **Ensure the backup script exists and uses production credentials:**
-   - Script: `backup_firestore.js`
-   - Must use: `serviceAccountKey_prod.json`
-   - Must use bucket: `assetflow-backend-2024.firebasestorage.app`
+3. **The script outputs** the export URI and an async operation name. The export
+   runs server-side — the command returns immediately.
 
-3. **Run the backup script:**
+4. **Monitor progress:**
    ```bash
-   node backup_firestore.js
+   gcloud firestore operations list --project=assetflow-backend-2024
+   ```
+   Wait for status `SUCCESSFUL`. For ~10 MB of data, expect 2-5 minutes.
+
+5. **List existing backups:**
+   ```bash
+   gcloud storage ls gs://assetflow-prod-backups-me-west1/firestore-backup/ --project=assetflow-prod-backups
    ```
 
-4. **Wait for completion:**
-   - The script will export each collection
-   - Show progress as it goes
-   - Report total collections, documents, and file size
+6. **Verify the backup:**
+   ```bash
+   gcloud storage ls --recursive gs://assetflow-prod-backups-me-west1/firestore-backup/<TIMESTAMP>/
+   ```
+   Confirm the folder contains `*.overall_export_metadata` and collection output files.
 
-5. **Verify the backup was created:**
-   - Check local file in `backups/` folder
-   - Check Firebase Storage console
+## Automated Backups
 
-## Expected Output
+Production has a scheduled cloud function that runs weekly (Monday 3:03 AM IST):
 
+- **Function:** `firestoreBackup` in `functions/index.js`
+- **Trigger:** Cloud Scheduler with OIDC authentication
+- **Retention:** 28 days (4 weekly backups, auto-deleted by bucket lifecycle rules)
+- **Max data loss window:** 7 days
+
+Manual backups supplement the automated schedule — run before risky operations
+(schema changes, rule updates, bulk data migrations).
+
+## Error Handling
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `PERMISSION_DENIED` | gcloud not authenticated or wrong account | Run `gcloud auth login` and verify with `gcloud config get-value account` |
+| `NOT_FOUND` on bucket | Bucket doesn't exist or wrong project context | Verify bucket name matches the table above |
+| `ALREADY_EXISTS` | Export with same timestamp already running | Wait for the existing operation to complete |
+| Certificate/TLS errors | Windows Schannel cert revocation check | Set `export NODE_OPTIONS="--use-system-ca"` |
+| `OPERATION_TOO_LARGE` | Data exceeded single-export limit | Contact GCP support; split by collection-ids |
+
+## Restore Procedure
+
+For disaster recovery, follow the full restore procedure documented at:
 ```
-Fetching all collections...
-Found X non-OBSOLETE collections: [...]
-Exporting ...
-
-=== Local Backup Complete ===
-Path: backups\firestore_TIMESTAMP.json
-Collections: X
-Total Documents: XXXX
-File Size: X.XX MB
-
-=== Uploading to Firebase Storage ===
-✅ Uploaded to: backups/firestore_TIMESTAMP.json
-Storage URL: gs://assetflow-backend-2024.firebasestorage.app/backups/...
-Download URL: https://firebasestorage.googleapis.com/v0/b/...
+scripts/RESTORE-PROCEDURE.md
 ```
 
-## Final Output
+Quick restore reference:
+```bash
+# Merge restore (safe — adds data, does not delete)
+gcloud firestore import gs://assetflow-prod-backups-me-west1/firestore-backup/<TIMESTAMP> \
+  --project=assetflow-backend-2024 --async
 
-```text
-═══════════════════════════════════════════════════════════
-  ✅ FIRESTORE BACKUP COMPLETE
-═══════════════════════════════════════════════════════════
-
-Project: assetflow-backend-2024 (PRODUCTION)
-Collections: X
-Documents: XXXX
-File Size: X.XX MB
-
-Local: backups\firestore_TIMESTAMP.json
-Storage: gs://assetflow-backend-2024.firebasestorage.app/backups/...
-Console: https://console.firebase.google.com/u/0/project/assetflow-backend-2024/storage/
-
-═══════════════════════════════════════════════════════════
+# Restore specific collections only
+gcloud firestore import gs://assetflow-prod-backups-me-west1/firestore-backup/<TIMESTAMP> \
+  --project=assetflow-backend-2024 --collection-ids='userData' --async
 ```
 
 ## Important Notes
 
-- This backs up PRODUCTION data (`assetflow-backend-2024`)
-- Only backs up non-OBSOLETE collections
-- Creates timestamped backup files (e.g., `firestore_2026-02-23T11-51-24-634Z.json`)
-- Stored locally AND in Firebase Storage for redundancy
-- No data is modified during backup (read-only operation)
+- The export is a **read-only operation** — no data is modified in Firestore
+- Exports capture data as it runs; concurrent writes may be partially included
+- Backups do NOT include: Firebase Auth users, Storage files, Security Rules, or Indexes
+- Auth users can be backed up separately: `firebase auth:export users.csv --project=assetflow-backend-2024`
+- Encrypted fields (payments) restore correctly as long as encryption keys
+  (`userData/{uid}/private/encryptionKey`) are in the backup

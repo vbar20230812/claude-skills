@@ -1,6 +1,6 @@
 ---
 name: coverage
-description: "Run code coverage, show area breakdown, identify low-coverage gaps, and report test status"
+description: "Run test suite with coverage, present area-by-area breakdown, flag low-coverage files, and recommend where to add tests. Triggers on: test coverage, coverage report, untested code, what needs tests, coverage check, /coverage."
 user_invocable: true
 ---
 

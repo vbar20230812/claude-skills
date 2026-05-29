@@ -1,6 +1,6 @@
 ---
 name: community-post
-description: "Generate community posts for AssetFlow marketing — Facebook groups (Hebrew) and LinkedIn (English). Uses investor protection framing, never portfolio tracker."
+description: "Generate or vary marketing posts for Israeli RE investor Facebook groups (Hebrew) and LinkedIn (English). Handles templates, scheduling, variation, and outreach tracking. Always uses investor-protection framing — never 'portfolio tracker'. Triggers on: Facebook post, LinkedIn post, community post, marketing post, outreach, social media post for AssetFlow."
 user_invocable: true
 argument-hint: "[template-number | suggest | vary N | list | schedule | track]"
 ---

@@ -1,3 +1,8 @@
+---
+name: devils-advocate
+description: Iterative self-refinement using the 8-step Self-Refine methodology. Forces critical review, assumption auditing, and polishing of any response or file. Use when the user says "refine", "double-check", "improve this", "make this better", "play devil's advocate", "critique your own answer", "what did you miss", or invokes /devils-advocate.
+---
+
 # Devil's Advocate: Self-Refine Technique
 
 Deeply recheck and refine the last response using the 8-step Self-Refine methodology. LLMs don't give their best answer first - they give a first draft. This skill forces iterative refinement to transform a 6/10 answer into a 10/10.
