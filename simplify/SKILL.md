@@ -1,3 +1,8 @@
+---
+name: simplify
+description: Review changed code for reuse, quality, and efficiency, then fix any issues found. Triggers on "simplify", "cleanup code", "review quality", "find duplicates", "code cleanup", or /simplify. Launches three parallel review agents checking code reuse, quality, and efficiency.
+---
+
 # Simplify: Code Review and Cleanup
 
 Review code for reuse, quality, and efficiency. Fix any issues found.
